@@ -15,11 +15,32 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ctypes import CDLL, CFUNCTYPE, c_char_p, c_int, c_void_p, create_string_buffer
+import ctypes.util
+from pathlib import Path
 
-try:
-    _libdvdcss = CDLL('libdvdcss.so.2')
-except OSError:
-    raise ImportError
+
+def _load_library() -> CDLL:
+    """Load libdvdcss DLL/SO library via ctypes CDLL if available.
+    Function copied from pydvdcss
+    """
+    names = ["dvdcss", "dvdcss2", "libdvdcss", "libdvdcss2", "libdvdcss-2"]
+    lib_name = None
+    for name in names:
+        lib_name = ctypes.util.find_library(name)
+        if lib_name:
+            break
+        local_path = Path(__file__).parent.parent / name
+        if local_path.with_suffix(".dll").exists() or local_path.with_suffix(".so").exists():
+            lib_name = str(local_path)
+            break
+    if not lib_name:
+        raise ImportError("Unable to locate the libdvdcss library")
+    lib = CDLL(lib_name)
+
+    return lib
+
+
+_libdvdcss = _load_library()
 
 _dvdcss_open = CFUNCTYPE(c_void_p, c_char_p)(('dvdcss_open', _libdvdcss))
 _dvdcss_close = CFUNCTYPE(c_int, c_void_p)(('dvdcss_open', _libdvdcss))
