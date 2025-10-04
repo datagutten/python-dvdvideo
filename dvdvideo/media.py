@@ -51,6 +51,8 @@ class MediaUdf(collections.abc.Mapping):
             f = self.File(filename)
         elif stat.S_ISBLK(s.st_mode):
             f = DvdCssFile(filename)
+        elif os.name == "nt" and os.path.realpath(filename) in os.listdrives():
+            f = DvdCssFile(filename)
         else:
             raise RuntimeError
 
